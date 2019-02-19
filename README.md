@@ -1,4 +1,44 @@
-# iOS视频全屏方案
+# iOS视频全屏方案 V2
+在V1的基础上创建了RotationViewController用来旋转指定的UIView
+并引入SnapKit进行布局
+#### 重点属性
+> `var rotateOriginalContentView: UIView! // 旋转原始视图`
+> `var rotateView: UIView! // 需要旋转的视图`
+> `var rotateViewOriginalFrameForWindow: CGRect! // 旋转视图相对于Window的原始位置，用于还原`
+> `var rotateTargetContentView: UIView! // 旋转目标视图`
+
+#### 重点方法
+当屏幕进行旋转时调用的方法
+此时只需要将想全屏的视图全屏或恢复原始大小即可
+```
+override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        if size.width > size.height {
+            if UIApplication.shared.statusBarOrientation == .landscapeLeft || UIApplication.shared.statusBarOrientation == .landscapeRight {
+                return
+            }
+            coordinator.animate(alongsideTransition: { (context) in
+                var frame = self.rotateTargetContentView.bounds
+                frame.size = size
+                self.rotateTargetContentView.frame = frame
+                self.rotateTargetContentView.layoutIfNeeded()
+            }) { (context) in
+            }
+        } else {
+            coordinator.animate(alongsideTransition: { (context) in
+                self.rotateTargetContentView.frame = self.rotateViewOriginalFrameForWindow
+                self.rotateTargetContentView.layoutIfNeeded()
+            }) { (context) in
+                self.rotateView.removeFromSuperview()
+                self.rotateOriginalContentView.addSubview(self.rotateView)
+                self.rotateTargetContentView.removeFromSuperview()
+                self.rotateView.snp.remakeConstraints({ (make) in
+                    make.edges.equalToSuperview()
+                })
+            }
+        }
+    }
+```
+# iOS视频全屏方案 V1
 利用iOS原生Orientation
 
 #### 设备两种方向
